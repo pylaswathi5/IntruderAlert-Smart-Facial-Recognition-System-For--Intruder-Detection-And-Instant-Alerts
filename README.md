@@ -41,6 +41,7 @@ A comprehensive web-based facial recognition system for detecting authorized use
 ```bash
 git clone https://github.com/pylaswathi5/IntruderAlert-Smart-Facial-Recognition-System-For--Intruder-Detection-And-Instant-Alerts.git
 cd IntruderAlert-Smart-Facial-Recognition-System-For--Intruder-Detection-And-Instant-Alerts
+```
 
 ### Step 2: Create a Virtual Environment (Recommended)
 
@@ -54,6 +55,7 @@ venv\Scripts\activate
 # On Linux/Mac:
 source venv/bin/activate
 ```
+
 
 ### Step 3: Install Dependencies
 
