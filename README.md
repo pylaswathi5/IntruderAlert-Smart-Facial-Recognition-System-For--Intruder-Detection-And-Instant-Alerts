@@ -36,13 +36,11 @@ A comprehensive web-based facial recognition system for detecting authorized use
 
 ## 🚀 Installation
 
-### Step 1: Clone or Download the Project
+### Step 1: Clone the Project
 
 ```bash
-# If using git
-git clone <repository-url>
-cd "smart facialfacial"
-```
+git clone https://github.com/pylaswathi5/IntruderAlert-Smart-Facial-Recognition-System-For--Intruder-Detection-And-Instant-Alerts.git
+cd IntruderAlert-Smart-Facial-Recognition-System-For--Intruder-Detection-And-Instant-Alerts
 
 ### Step 2: Create a Virtual Environment (Recommended)
 
