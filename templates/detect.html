@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Face Detection - Smart Facial Recognition{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🔍 Face Detection</h1>
+    <p class="page-subtitle">Upload an image to detect and identify faces</p>
+</div>
+
+<div class="detect-container">
+    <div class="detect-card">
+        <form action="/detect" method="post" enctype="multipart/form-data" id="detectForm">
+            <div class="form-group">
+                <label for="detect-image">
+                    <span class="label-icon">📷</span>
+                    Upload Image
+                </label>
+                <div class="file-upload-area" id="detectUploadArea">
+                    <input type="file" id="detect-image" name="image" accept="image/*" required onchange="previewDetectImage(this, 'detect-preview-container')">
+                    <div class="upload-placeholder">
+                        <span class="upload-icon">📁</span>
+                        <p>Click to select or drag and drop an image</p>
+                        <small>Supported: JPG, JPEG, PNG, GIF (Max 16MB)</small>
+                    </div>
+                </div>
+                <div id="detect-preview-container" class="image-preview-container"></div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-large">
+                    <span>🔍 Detect Face</span>
+                </button>
+            </div>
+        </form>
+        
+        {% if intruder_detected %}
+        <script>
+            // Play alarm sound when intruder detected using alarm.mp3 from static folder
+            function playAlarm() {
+                try {
+                    const audio = new Audio('/static/alarm.mp3');
+                    audio.volume = 1.0;
+                    audio.play().catch(err => {
+                        console.error("Error playing alarm:", err);
+                    });
+                } catch (e) {
+                    console.error("Error playing alarm:", e);
+                }
+            }
+            
+            // Play alarm when page loads with intruder detected
+            window.addEventListener('load', () => {
+                setTimeout(playAlarm, 500);
+            });
+        </script>
+        {% endif %}
+    </div>
+    
+    <div class="detect-info-card">
+        <h3>ℹ️ How it works</h3>
+        <ol>
+            <li>Upload an image containing a face</li>
+            <li>The system will detect and analyze the face</li>
+            <li>Compare against authorized users database</li>
+            <li>Display result: Authorized or Intruder</li>
+        </ol>
+        
+        <div class="info-box">
+            <strong>Note:</strong> For best results, use clear images with good lighting and a front-facing face.
+        </div>
+        
+        <a href="/webcam" class="btn btn-secondary" style="margin-top: 20px; display: block; text-align: center;">
+            📹 Or try Live Webcam Detection
+        </a>
+    </div>
+</div>
+
+<script>
+function previewDetectImage(input, containerId) {
+    const container = document.getElementById(containerId);
+    const uploadArea = document.getElementById('detectUploadArea');
+    
+    container.innerHTML = '';
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            uploadArea.style.display = 'none';
+            
+            const previewDiv = document.createElement('div');
+            previewDiv.className = 'preview-image-wrapper';
+            
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'preview-image';
+            img.alt = 'Preview';
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'remove-preview';
+            removeBtn.innerHTML = '✕';
+            removeBtn.onclick = function() {
+                container.innerHTML = '';
+                uploadArea.style.display = 'block';
+                input.value = '';
+            };
+            
+            previewDiv.appendChild(img);
+            previewDiv.appendChild(removeBtn);
+            container.appendChild(previewDiv);
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Drag and drop for detection
+const detectUploadArea = document.getElementById('detectUploadArea');
+const detectFileInput = document.getElementById('detect-image');
+
+detectUploadArea.addEventListener('click', () => detectFileInput.click());
+
+detectUploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    detectUploadArea.classList.add('drag-over');
+});
+
+detectUploadArea.addEventListener('dragleave', () => {
+    detectUploadArea.classList.remove('drag-over');
+});
+
+detectUploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    detectUploadArea.classList.remove('drag-over');
+    
+    if (e.dataTransfer.files.length > 0) {
+        detectFileInput.files = e.dataTransfer.files;
+        previewDetectImage(detectFileInput, 'detect-preview-container');
+    }
+});
+</script>
+{% endblock %}
+

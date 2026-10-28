@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Smart Facial Recognition{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📊 Dashboard</h1>
+    <p class="page-subtitle">System overview and quick insights</p>
+</div>
+
+<!-- Statistics Cards -->
+<div class="stats-grid">
+    <div class="stat-card stat-primary">
+        <div class="stat-icon">👥</div>
+        <div class="stat-details">
+            <h3>{{ stats.total_users }}</h3>
+            <p>Authorized Users</p>
+        </div>
+    </div>
+    
+    <div class="stat-card stat-info">
+        <div class="stat-icon">🔍</div>
+        <div class="stat-details">
+            <h3>{{ stats.total_detections }}</h3>
+            <p>Total Detections</p>
+        </div>
+    </div>
+    
+    <div class="stat-card stat-success">
+        <div class="stat-icon">✅</div>
+        <div class="stat-details">
+            <h3>{{ stats.authorized }}</h3>
+            <p>Authorized Access</p>
+        </div>
+    </div>
+    
+    <div class="stat-card stat-danger">
+        <div class="stat-icon">🚨</div>
+        <div class="stat-details">
+            <h3>{{ stats.intruders }}</h3>
+            <p>Intruders Detected</p>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="section">
+    <h2 class="section-title">Quick Actions</h2>
+    <div class="action-grid">
+        <a href="/add-user" class="action-card">
+            <div class="action-icon">➕</div>
+            <h3>Add New User</h3>
+            <p>Register a new authorized person</p>
+        </a>
+        
+        <a href="/detect" class="action-card">
+            <div class="action-icon">🔍</div>
+            <h3>Detect Face</h3>
+            <p>Check if a person is authorized</p>
+        </a>
+        
+        <a href="/webcam" class="action-card">
+            <div class="action-icon">📹</div>
+            <h3>Live Webcam</h3>
+            <p>Real-time face recognition</p>
+        </a>
+        
+        <a href="/users" class="action-card">
+            <div class="action-icon">👥</div>
+            <h3>Manage Users</h3>
+            <p>View and manage authorized users</p>
+        </a>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="section">
+    <div class="section-header">
+        <h2 class="section-title">Recent Activity</h2>
+        <a href="/logs" class="view-all-link">View All →</a>
+    </div>
+    
+    {% if logs %}
+    <div class="activity-list">
+        {% for log in logs %}
+        <div class="activity-item {{ 'activity-intruder' if log.type == 'intruder' else 'activity-authorized' }}">
+            <div class="activity-icon">
+                {{ '🚨' if log.type == 'intruder' else '✅' }}
+            </div>
+            <div class="activity-content">
+                <div class="activity-name">{{ log.name }}</div>
+                <div class="activity-meta">
+                    <span class="activity-time">{{ log.timestamp }}</span>
+                    <span class="activity-confidence">Confidence: {{ "%.1f"|format(log.confidence * 100) }}%</span>
+                </div>
+            </div>
+            <div class="activity-type">
+                <span class="type-badge {{ log.type }}">
+                    {{ 'Intruder' if log.type == 'intruder' else 'Authorized' }}
+                </span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>No recent activity. Start detecting faces to see logs here.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

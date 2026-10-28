@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Add User - Smart Facial Recognition{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>➕ Add Authorized User</h1>
+    <p class="page-subtitle">Register a new person in the system</p>
+</div>
+
+<div class="form-container">
+    <div class="form-card">
+        <form id="addUserForm">
+            <div class="form-group">
+                <label for="name">
+                    <span class="label-icon">👤</span>
+                    User Name
+                </label>
+                <input type="text" id="name" name="name" placeholder="Enter full name" required autofocus>
+                <small class="form-hint">Enter the full name of the person you want to authorize</small>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <span class="label-icon">📷</span>
+                    Capture User Photos (Webcam)
+                </label>
+                <div class="webcam-capture-container">
+                    <div class="webcam-preview">
+                        <video id="userVideo" autoplay playsinline></video>
+                        <canvas id="captureCanvas" style="display:none;"></canvas>
+                    </div>
+                    <div class="capture-controls">
+                        <button type="button" class="btn btn-secondary" id="startWebcamBtn">📹 Start Webcam</button>
+                        <button type="button" class="btn btn-primary" id="captureBtn" disabled>📷 Capture Photo</button>
+                        <span id="captureCountLabel" class="capture-count">Captured 0 / 10</span>
+                    </div>
+                    <div id="capturedImagesContainer" class="captured-images-grid"></div>
+                </div>
+                <small class="form-hint">
+                    Capture <strong>10 color images</strong> of the user in different angles and expressions for more accurate recognition.
+                </small>
+            </div>
+            
+            <div class="form-tips">
+                <h4>💡 Tips for best results:</h4>
+                <ul>
+                    <li>Use clear, well-lit photos</li>
+                    <li>Face should be front-facing and clearly visible</li>
+                    <li>Avoid sunglasses, masks, or hats</li>
+                    <li>Ensure good image quality</li>
+                </ul>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-large" id="submitUserBtn">
+                    <span>➕ Add User (After 10 Captures)</span>
+                </button>
+                <a href="/" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let userStream = null;
+let capturedBlobs = [];
+const REQUIRED_CAPTURE_COUNT = 10;
+
+const videoEl = document.getElementById('userVideo');
+const canvasEl = document.getElementById('captureCanvas');
+const startWebcamBtn = document.getElementById('startWebcamBtn');
+const captureBtn = document.getElementById('captureBtn');
+const captureCountLabel = document.getElementById('captureCountLabel');
+const capturedImagesContainer = document.getElementById('capturedImagesContainer');
+const addUserForm = document.getElementById('addUserForm');
+const submitUserBtn = document.getElementById('submitUserBtn');
+
+async function startUserWebcam() {
+    try {
+        if (userStream) {
+            return;
+        }
+        userStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false });
+        videoEl.srcObject = userStream;
+        startWebcamBtn.disabled = true;
+        captureBtn.disabled = false;
+    } catch (err) {
+        console.error('Error accessing webcam:', err);
+        alert('Unable to access webcam. Please check camera permissions and try again.');
+    }
+}
+
+function updateCaptureCountLabel() {
+    captureCountLabel.textContent = `Captured ${capturedBlobs.length} / ${REQUIRED_CAPTURE_COUNT}`;
+}
+
+function addCapturedThumbnail(dataUrl, index) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'captured-thumb';
+
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    img.alt = `Capture ${index + 1}`;
+
+    wrapper.appendChild(img);
+    capturedImagesContainer.appendChild(wrapper);
+}
+
+function captureUserFrame() {
+    if (!userStream) {
+        alert('Please start the webcam first.');
+        return;
+    }
+    if (capturedBlobs.length >= REQUIRED_CAPTURE_COUNT) {
+        alert(`You already captured ${REQUIRED_CAPTURE_COUNT} images.`);
+        return;
+    }
+
+    const trackSettings = userStream.getVideoTracks()[0].getSettings();
+    const width = trackSettings.width || 640;
+    const height = trackSettings.height || 480;
+
+    canvasEl.width = width;
+    canvasEl.height = height;
+
+    const ctx = canvasEl.getContext('2d');
+    ctx.drawImage(videoEl, 0, 0, width, height);
+
+    // Export as color JPEG blob
+    canvasEl.toBlob((blob) => {
+        if (!blob) {
+            alert('Failed to capture image. Please try again.');
+            return;
+        }
+
+        capturedBlobs.push(blob);
+
+        // Show thumbnail preview
+        const dataUrl = canvasEl.toDataURL('image/jpeg');
+        addCapturedThumbnail(dataUrl, capturedBlobs.length - 1);
+
+        updateCaptureCountLabel();
+    }, 'image/jpeg', 0.9);
+}
+
+startWebcamBtn.addEventListener('click', startUserWebcam);
+captureBtn.addEventListener('click', captureUserFrame);
+
+addUserForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const name = document.getElementById('name').value.trim();
+    if (!name) {
+        alert('Please enter a name.');
+        return;
+    }
+
+    if (capturedBlobs.length !== REQUIRED_CAPTURE_COUNT) {
+        alert(`Please capture exactly ${REQUIRED_CAPTURE_COUNT} images before submitting.`);
+        return;
+    }
+
+    submitUserBtn.disabled = true;
+    submitUserBtn.textContent = 'Saving user...';
+
+    const formData = new FormData();
+    formData.append('name', name);
+
+    capturedBlobs.forEach((blob, idx) => {
+        // Ensure filename has an image extension so backend treats it as a color image
+        formData.append('images', blob, `capture_${idx + 1}.jpg`);
+    });
+
+    fetch('/add-user', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message || 'User added successfully.');
+            // Reset form and captures
+            addUserForm.reset();
+            capturedBlobs = [];
+            capturedImagesContainer.innerHTML = '';
+            updateCaptureCountLabel();
+        } else {
+            alert(data.message || 'Failed to add user.');
+        }
+    })
+    .catch(err => {
+        console.error('Error adding user:', err);
+        alert('An error occurred while adding the user.');
+    })
+    .finally(() => {
+        submitUserBtn.disabled = false;
+        submitUserBtn.textContent = '➕ Add User (After 10 Captures)';
+    });
+});
+
+// Initialize label on page load
+updateCaptureCountLabel();
+</script>
+{% endblock %}
+

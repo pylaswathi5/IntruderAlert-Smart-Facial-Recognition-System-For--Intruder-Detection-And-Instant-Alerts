@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Login - Smart Facial Recognition{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🔐 Admin Login</h1>
+    <p class="page-subtitle">Only the admin can manage users and add new authorized faces.</p>
+</div>
+
+<div class="form-container">
+    <div class="form-card">
+        <form method="post" action="{{ url_for('login', next=request.args.get('next')) }}">
+            <div class="form-group">
+                <label for="username">
+                    <span class="label-icon">👤</span>
+                    Username
+                </label>
+                <input type="text" id="username" name="username" placeholder="Enter admin username" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label for="password">
+                    <span class="label-icon">🔑</span>
+                    Password
+                </label>
+                <input type="password" id="password" name="password" placeholder="Enter password" required>
+            </div>
+
+            <div class="form-actions" style="margin-top: 20px;">
+                <button type="submit" class="btn btn-primary btn-large">
+                    <span>🔐 Login</span>
+                </button>
+            </div>
+
+            {% if error %}
+            <div class="message error-message" style="margin-top: 20px;">
+                {{ error }}
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+

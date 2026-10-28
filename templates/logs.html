@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Detection Logs - Smart Facial Recognition{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📋 Detection Logs</h1>
+    <p class="page-subtitle">Complete history of all face detection events</p>
+</div>
+
+<div class="logs-section">
+    {% if logs %}
+    <div class="logs-header">
+        <div class="logs-stats">
+            <span class="stat-badge">Total: {{ logs|length }} entries</span>
+            <span class="stat-badge stat-success">Authorized: {{ stats.authorized }}</span>
+            <span class="stat-badge stat-danger">Intruders: {{ stats.intruders }}</span>
+        </div>
+    </div>
+    
+    <div class="logs-table-container">
+        <table class="logs-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Type</th>
+                    <th>Name</th>
+                    <th>Confidence</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr class="log-row {{ 'log-intruder' if log.type == 'intruder' else 'log-authorized' }}">
+                    <td class="log-time">{{ log.timestamp }}</td>
+                    <td>
+                        <span class="type-badge {{ log.type }}">
+                            {{ '🚨 Intruder' if log.type == 'intruder' else '✅ Authorized' }}
+                        </span>
+                    </td>
+                    <td class="log-name"><strong>{{ log.name }}</strong></td>
+                    <td class="log-confidence">
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: {{ (log.confidence * 100)|round }}%"></div>
+                            <span class="confidence-text">{{ "%.1f"|format(log.confidence * 100) }}%</span>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h3>No Logs Available</h3>
+        <p>No face detection events have been recorded yet.</p>
+        <a href="/detect" class="btn btn-primary" style="margin-top: 20px;">
+            <span>🔍 Start Detecting</span>
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

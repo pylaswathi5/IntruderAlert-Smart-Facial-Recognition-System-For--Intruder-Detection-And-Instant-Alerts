@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Flask
+instance/
+.webassets-cache
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+detection_logs.json
+uploads/
+*.log
+
+# Model files (if cached)
+*.h5
+*.pb
+*.pkl
+
+# Temporary files
+*.tmp
+*.temp
+
+# Keep directories but ignore their contents (except .gitkeep)
+authorized_faces/*
+!authorized_faces/.gitkeep
+intruders/*
+!intruders/.gitkeep
+
+# Environment variables and credentials
+.env
+.env.*
+!.env.example
+
+# Python virtual environment
+.venv/

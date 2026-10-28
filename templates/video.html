@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Webcam - Smart Facial Recognition</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .video-container {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        #video-stream {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .video-controls {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📹 Live Webcam Detection</h1>
+            <p class="subtitle">Real-time face recognition</p>
+        </header>
+
+        <div class="page-actions">
+            <a href="/" class="btn btn-secondary">← Back to Home</a>
+        </div>
+
+        <div class="video-container">
+            <img id="video-stream" src="{{ url_for('video_feed') }}" alt="Video Stream">
+            <div class="video-controls">
+                <p style="color: #666; margin-top: 15px;">
+                    <strong>Note:</strong> Face recognition runs every 5 frames for better performance.
+                    Make sure you have a webcam connected and allow browser access to it.
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

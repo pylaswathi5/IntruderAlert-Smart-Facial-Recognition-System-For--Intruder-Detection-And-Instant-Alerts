@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}Live Webcam - Smart Facial Recognition{% endblock %}
+
+{% block extra_css %}
+<style>
+    .webcam-container {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    
+    .video-wrapper {
+        position: relative;
+        max-width: 900px;
+        margin: 0 auto;
+        border-radius: 15px;
+        overflow: hidden;
+        background: #000;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
+    
+    #video-stream {
+        width: 100%;
+        display: block;
+    }
+    
+    .alert-banner {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #d63031;
+        color: white;
+        padding: 20px 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(214, 48, 49, 0.5);
+        z-index: 10000;
+        animation: pulse-alert 1s infinite;
+        display: none;
+    }
+    
+    @keyframes pulse-alert {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    .monitoring-status {
+        margin-top: 20px;
+        padding: 15px;
+        background: #f8f9ff;
+        border-radius: 12px;
+        border-left: 4px solid #6c5ce7;
+    }
+    
+    .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+        animation: blink 1s infinite;
+    }
+    
+    .status-indicator.active {
+        background: #00b894;
+    }
+    
+    .status-indicator.alert {
+        background: #d63031;
+    }
+    
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .webcam-info {
+        margin-top: 25px;
+        padding: 20px;
+        background: #f8f9ff;
+        border-radius: 12px;
+        border-left: 4px solid #6c5ce7;
+    }
+    
+    .webcam-info h3 {
+        color: #2d3436;
+        margin-bottom: 10px;
+    }
+    
+    .webcam-info ul {
+        text-align: left;
+        color: #636e72;
+        line-height: 1.8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📹 Live Webcam Detection</h1>
+    <p class="page-subtitle">Real-time face recognition with live video feed</p>
+</div>
+
+<div class="alert-banner" id="alertBanner">
+    <h2>🚨 INTRUDER DETECTED!</h2>
+    <p>Email alert has been sent to admin</p>
+</div>
+
+<div class="webcam-container">
+    <div class="video-wrapper">
+        <img id="video-stream" src="static/image.jpg" alt="Video Stream">
+    </div>
+
+    <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+        <button class="btn btn-primary btn-large" id="startCameraBtn" type="button" onclick="startCamera()">
+            📹 Start Camera
+        </button>
+        <button class="btn btn-secondary btn-large" id="stopCameraBtn" type="button" onclick="stopCamera()" disabled>
+            ⏹ Stop Camera
+        </button>
+    </div>
+    
+    <div class="monitoring-status" style="margin-top: 20px;">
+        <span class="status-indicator active" id="statusIndicator"></span>
+        <strong>Monitoring Status:</strong> <span id="statusText">Idle - Click \"Start Camera\" to begin monitoring</span>
+    </div>
+    
+    <div class="webcam-info">
+        <h3>ℹ️ Information</h3>
+        <ul>
+            <li><strong>Performance:</strong> Face recognition runs every 5 frames for optimal performance</li>
+            <li><strong>Requirements:</strong> Ensure your webcam is connected and browser permissions are granted</li>
+            <li><strong>Recognition:</strong> Green box = Authorized, Red box = Intruder</li>
+            <li><strong>Alerts:</strong> Alarm sound and email notification will trigger when intruder detected</li>
+            <li><strong>Tips:</strong> Ensure good lighting and face the camera directly</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+let lastIntruderTime = null;
+let alarmPlaying = false;
+let monitoringActive = false;
+let statusIntervalId = null;
+let originalVideoSrc = null;
+
+// Play alarm sound using alarm.mp3 from static folder
+function playAlarm() {
+    if (alarmPlaying || !monitoringActive) return;
+    alarmPlaying = true;
+
+    try {
+        const audio = new Audio('/static/alarm.mp3');
+        audio.volume = 1.0;
+        audio.play().catch(err => {
+            console.error("Error playing alarm:", err);
+            alarmPlaying = false;
+        });
+
+        // Reset flag after sound finishes (approx)
+        setTimeout(() => {
+            alarmPlaying = false;
+        }, 3000);
+    } catch (e) {
+        console.error("Error playing alarm:", e);
+        alarmPlaying = false;
+    }
+}
+
+// Start camera stream on button click
+function startCamera() {
+    if (monitoringActive) return;
+
+    const img = document.getElementById('video-stream');
+    const startBtn = document.getElementById('startCameraBtn');
+    const stopBtn = document.getElementById('stopCameraBtn');
+    const statusText = document.getElementById('statusText');
+    const statusIndicator = document.getElementById('statusIndicator');
+
+    // Remember the original image src so we can restore it when stopping
+    if (!originalVideoSrc) {
+        originalVideoSrc = img.src;
+    }
+
+    img.src = "{{ url_for('video_feed') }}?t=" + Date.now();
+    monitoringActive = true;
+
+    startBtn.textContent = "📹 Camera Running";
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+
+    statusIndicator.className = 'status-indicator active';
+    statusText.textContent = "Active - Scanning for faces...";
+
+    if (!statusIntervalId) {
+        statusIntervalId = setInterval(checkDetectionStatus, 2000);
+    }
+}
+
+// Stop camera stream and monitoring
+function stopCamera() {
+    if (!monitoringActive) return;
+
+    const img = document.getElementById('video-stream');
+    const startBtn = document.getElementById('startCameraBtn');
+    const stopBtn = document.getElementById('stopCameraBtn');
+    const statusText = document.getElementById('statusText');
+    const statusIndicator = document.getElementById('statusIndicator');
+    const alertBanner = document.getElementById('alertBanner');
+
+    monitoringActive = false;
+
+    // Stop video stream and restore original placeholder image
+    img.src = originalVideoSrc || "";
+
+    // Stop polling
+    if (statusIntervalId) {
+        clearInterval(statusIntervalId);
+        statusIntervalId = null;
+    }
+
+    // Reset UI
+    startBtn.textContent = "📹 Start Camera";
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+
+    statusIndicator.className = 'status-indicator';
+    statusText.textContent = 'Idle - Click "Start Camera" to begin monitoring';
+    alertBanner.style.display = 'none';
+}
+
+// Monitor detection status (only when monitoringActive)
+function checkDetectionStatus() {
+    if (!monitoringActive) return;
+
+    fetch('/detection_status')
+        .then(response => response.json())
+        .then(data => {
+            if (!monitoringActive) return; // Re-check in case stopped while request was in-flight
+
+            const statusIndicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            const alertBanner = document.getElementById('alertBanner');
+            
+            if (data.status === 'intruder') {
+                statusIndicator.className = 'status-indicator alert';
+                statusText.textContent = `🚨 INTRUDER DETECTED: ${data.name} (${(data.confidence * 100).toFixed(1)}%)`;
+                
+                // Show alert banner
+                alertBanner.style.display = 'block';
+                
+                // Play alarm if this is a new detection
+                const detectionTime = new Date(data.timestamp).getTime();
+                if (!lastIntruderTime || detectionTime > lastIntruderTime) {
+                    playAlarm();
+                    lastIntruderTime = detectionTime;
+                    
+                    // Hide banner after 5 seconds
+                    setTimeout(() => {
+                        if (monitoringActive) {
+                            alertBanner.style.display = 'none';
+                        }
+                    }, 5000);
+                }
+            } else if (data.status === 'authorized') {
+                statusIndicator.className = 'status-indicator active';
+                statusText.textContent = `✅ Authorized: ${data.name} (${(data.confidence * 100).toFixed(1)}%)`;
+                alertBanner.style.display = 'none';
+            } else {
+                statusIndicator.className = 'status-indicator active';
+                statusText.textContent = 'Active - Scanning for faces...';
+                alertBanner.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error checking detection status:', error);
+        });
+}
+</script>
+{% endblock %}
+

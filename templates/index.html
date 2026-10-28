@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Facial Recognition System</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Smart Facial Recognition System</h1>
+            <p class="subtitle">Intruder Detection & Access Control</p>
+        </header>
+
+        <!-- Statistics Dashboard -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-info">
+                    <h3>{{ stats.total_users }}</h3>
+                    <p>Authorized Users</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔍</div>
+                <div class="stat-info">
+                    <h3>{{ stats.total_detections }}</h3>
+                    <p>Total Detections</p>
+                </div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-icon">✅</div>
+                <div class="stat-info">
+                    <h3>{{ stats.authorized }}</h3>
+                    <p>Authorized Access</p>
+                </div>
+            </div>
+            <div class="stat-card danger">
+                <div class="stat-icon">🚨</div>
+                <div class="stat-info">
+                    <h3>{{ stats.intruders }}</h3>
+                    <p>Intruders Detected</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        {% if success %}
+        <div class="message success-message">{{ success }}</div>
+        {% endif %}
+        {% if error %}
+        <div class="message error-message">{{ error }}</div>
+        {% endif %}
+        {% if warning %}
+        <div class="message warning-message">{{ warning }}</div>
+        {% endif %}
+
+        <!-- Main Content Grid -->
+        <div class="main-grid">
+            <!-- Add User Section -->
+            <div class="card">
+                <h2>➕ Add Authorized User</h2>
+                <form action="/add_user" method="post" enctype="multipart/form-data" id="addUserForm">
+                    <div class="form-group">
+                        <label for="name">User Name</label>
+                        <input type="text" id="name" name="name" placeholder="Enter user name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="image">User Photo</label>
+                        <input type="file" id="image" name="image" accept="image/*" required onchange="previewImage(this, 'preview-add')">
+                        <div id="preview-add" class="image-preview"></div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add User</button>
+                </form>
+            </div>
+
+            <!-- Detection Section -->
+            <div class="card">
+                <h2>🔍 Face Detection</h2>
+                <form action="/predict" method="post" enctype="multipart/form-data" id="predictForm">
+                    <div class="form-group">
+                        <label for="detect-image">Upload Image</label>
+                        <input type="file" id="detect-image" name="image" accept="image/*" required onchange="previewImage(this, 'preview-detect')">
+                        <div id="preview-detect" class="image-preview"></div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Detect Face</button>
+                </form>
+                <div class="webcam-section">
+                    <a href="/video" target="_blank" class="btn btn-secondary">📹 Open Live Webcam</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Authorized Users List -->
+        <div class="card">
+            <div class="card-header">
+                <h2>👥 Authorized Users</h2>
+                <span class="badge">{{ users|length }} users</span>
+            </div>
+            {% if users %}
+            <div class="users-list">
+                {% for user in users %}
+                <div class="user-item">
+                    <div class="user-info">
+                        <span class="user-name">{{ user }}</span>
+                    </div>
+                    <button onclick="deleteUser('{{ user }}')" class="btn btn-danger btn-sm">Delete</button>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="empty-state">No authorized users yet. Add users using the form above.</p>
+            {% endif %}
+        </div>
+
+        <!-- Recent Detections -->
+        <div class="card">
+            <div class="card-header">
+                <h2>📊 Recent Detections</h2>
+                <a href="/logs" class="btn-link">View All →</a>
+            </div>
+            {% if logs %}
+            <div class="logs-list">
+                {% for log in logs %}
+                <div class="log-item {{ 'intruder' if log.type == 'intruder' else 'authorized' }}">
+                    <div class="log-icon">
+                        {{ '🚨' if log.type == 'intruder' else '✅' }}
+                    </div>
+                    <div class="log-info">
+                        <div class="log-name">{{ log.name }}</div>
+                        <div class="log-meta">
+                            <span>{{ log.timestamp }}</span>
+                            <span class="confidence">Confidence: {{ "%.1f"|format(log.confidence * 100) }}%</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="empty-state">No detections yet. Start detecting faces to see logs here.</p>
+            {% endif %}
+        </div>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+            <a href="/logs" class="btn btn-outline">📋 View All Logs</a>
+            <a href="/intruders" class="btn btn-outline">🚨 View Intruders</a>
+        </div>
+    </div>
+
+    <script>
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            preview.innerHTML = '';
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.maxWidth = '100%';
+                    img.style.maxHeight = '200px';
+                    img.style.borderRadius = '8px';
+                    img.style.marginTop = '10px';
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function deleteUser(username) {
+            if (!confirm(`Are you sure you want to delete user "${username}"?`)) {
+                return;
+            }
+            
+            fetch(`/delete_user/${encodeURIComponent(username)}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the user');
+            });
+        }
+    </script>
+</body>
+</html>

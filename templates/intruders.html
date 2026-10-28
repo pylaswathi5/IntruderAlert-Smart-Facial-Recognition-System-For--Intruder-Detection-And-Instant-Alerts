@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Intruders - Smart Facial Recognition{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🚨 Intruder Detection Gallery</h1>
+    <p class="page-subtitle">All detected unauthorized access attempts</p>
+</div>
+
+<div class="intruders-section">
+    {% if intruders %}
+    <div class="intruders-header">
+        <div class="intruders-stats">
+            <span class="stat-badge stat-danger">Total Intruders: {{ intruders|length }}</span>
+        </div>
+    </div>
+    
+    <div class="intruders-grid">
+        {% for intruder in intruders %}
+        <div class="intruder-card">
+            <div class="intruder-image-wrapper">
+                <img src="/intruder-image/{{ intruder.filename }}" alt="Intruder" loading="lazy" class="intruder-image">
+                <div class="intruder-overlay">
+                    <span class="intruder-label">🚨 INTRUDER</span>
+                </div>
+            </div>
+            <div class="intruder-details">
+                <div class="intruder-time">
+                    <span class="time-icon">📅</span>
+                    <span>{{ intruder.timestamp }}</span>
+                </div>
+                <div class="intruder-filename">{{ intruder.filename }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">🔒</div>
+        <h3>No Intruders Detected</h3>
+        <p>Great news! The system is secure and no unauthorized access attempts have been detected.</p>
+        <p style="margin-top: 10px; color: #00b894;">✅ All detections have been authorized users</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

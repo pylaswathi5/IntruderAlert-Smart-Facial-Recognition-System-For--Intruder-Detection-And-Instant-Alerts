@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Users - Smart Facial Recognition{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="header-content">
+        <div>
+            <h1>👥 Manage Authorized Users</h1>
+            <p class="page-subtitle">View and manage all authorized persons in the system</p>
+        </div>
+        <a href="/add-user" class="btn btn-primary">
+            <span>➕ Add New User</span>
+        </a>
+    </div>
+</div>
+
+<div class="users-section">
+    {% if users %}
+    <div class="users-grid">
+        {% for user in users %}
+        <div class="user-card">
+            <div class="user-avatar">
+                <span>👤</span>
+            </div>
+            <div class="user-info">
+                <h3>{{ user }}</h3>
+                <p class="user-status">Authorized</p>
+            </div>
+            <div class="user-actions">
+                <button onclick="deleteUser('{{ user }}')" class="btn btn-danger btn-sm">
+                    <span>🗑️ Delete</span>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="users-summary">
+        <p><strong>Total Users:</strong> {{ users|length }}</p>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">👥</div>
+        <h3>No Users Yet</h3>
+        <p>You haven't added any authorized users to the system.</p>
+        <a href="/add-user" class="btn btn-primary" style="margin-top: 20px;">
+            <span>➕ Add Your First User</span>
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function deleteUser(username) {
+    if (!confirm(`Are you sure you want to delete user "${username}"?\n\nThis action cannot be undone.`)) {
+        return;
+    }
+    
+    fetch(`/delete-user/${encodeURIComponent(username)}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while deleting the user');
+    });
+}
+</script>
+{% endblock %}
+

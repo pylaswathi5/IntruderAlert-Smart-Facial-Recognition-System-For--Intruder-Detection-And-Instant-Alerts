@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Smart Facial Recognition{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h3>🎯 Security System</h3>
+            <p class="subtitle">Security System</p>
+        </div>
+        
+        <ul class="nav-menu">
+            <li>
+                <a href="/" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="/add-user" class="nav-link {% if request.endpoint == 'add_user_page' %}active{% endif %}">
+                    <span class="nav-icon">➕</span>
+                    <span class="nav-text">Add User</span>
+                </a>
+            </li>
+            <li>
+                <a href="/detect" class="nav-link {% if request.endpoint == 'detect_page' %}active{% endif %}">
+                    <span class="nav-icon">🔍</span>
+                    <span class="nav-text">Face Detection</span>
+                </a>
+            </li>
+            <li>
+                <a href="/webcam" class="nav-link {% if request.endpoint == 'video_page' or request.endpoint == 'webcam_page' %}active{% endif %}">
+                    <span class="nav-icon">📹</span>
+                    <span class="nav-text">Live Webcam</span>
+                </a>
+            </li>
+            <li>
+                <a href="/users" class="nav-link {% if request.endpoint == 'users_page' %}active{% endif %}">
+                    <span class="nav-icon">👥</span>
+                    <span class="nav-text">Manage Users</span>
+                </a>
+            </li>
+            <li>
+                <a href="/logs" class="nav-link {% if request.endpoint == 'logs_page' %}active{% endif %}">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-text">Detection Logs</span>
+                </a>
+            </li>
+            <li>
+                <a href="/intruders" class="nav-link {% if request.endpoint == 'intruders_page' %}active{% endif %}">
+                    <span class="nav-icon">🚨</span>
+                    <span class="nav-text">Intruders</span>
+                </a>
+            </li>
+        </ul>
+        
+        <div class="sidebar-footer">
+            
+            <div style="margin-top: 10px;">
+                {% if session.get('admin_logged_in') %}
+                    <a href="{{ url_for('logout') }}" class="nav-link" style="padding-left: 0;">
+                        <span class="nav-icon">🔓</span>
+                        <span class="nav-text">Logout (Admin)</span>
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="nav-link" style="padding-left: 0;">
+                        <span class="nav-icon">🔐</span>
+                        <span class="nav-text">Admin Login</span>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="content-wrapper">
+            {% if success %}
+            <div class="alert alert-success">
+                <span class="alert-icon">✅</span>
+                <span>{{ success }}</span>
+            </div>
+            {% endif %}
+            {% if error %}
+            <div class="alert alert-error">
+                <span class="alert-icon">❌</span>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+            {% if warning %}
+            <div class="alert alert-warning">
+                <span class="alert-icon">⚠️</span>
+                <span>{{ warning }}</span>
+            </div>
+            {% endif %}
+            
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+
